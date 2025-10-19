@@ -1,15 +1,136 @@
+use std::cell::RefMut;
 use std::cmp::Ordering;
 use std::io;
 use rand::Rng;
 
 fn main() {
-    chapter_4_OWNERSHIP();
+   chapter_4_2_REFERENCES();
 }
 
-fn chapter_4_OWNERSHIP()
+fn chapter_4_2_REFERENCES()
+{
+    let is_reference_borrowing = true;
+
+    if is_reference_borrowing {
+        println!("################# REFERENCES ###############");
+        // But what to do when we want function to do stuff with our variable, 
+        // but not take ownership of it? For example, calculate length of 
+        // string? Currently we need to do it like that:
+        fn calc_len(s: String) -> (String, usize)
+        {
+            let len = s.len();
+
+            // In main scope we still want to use our string value, so we need 
+            // to return it since ownership was moved, but we also want length
+            // thus we need to return tuple
+            (s, len)
+        }
+
+        let s = String::from("Calc len of string");
+
+        // to calc length of string and still be able to use this string we 
+        // need to return tuple - TEDIOUS
+        let (s, len) = calc_len(s);
+        println!("TEDIOUS WAY:");
+        println!("string s={s}, its length: {len}");
+
+        println!("######### REFERENCES and BORROWING ###########");
+        // A reference is an address we can follow to access the data stored at that address; THAT DATA IS OWNED BY SOME OTHER VARIABLE. 
+        // Unlike a pointer, a reference is GUARANTEED TO POINT TO A VALID VALUE of a particular type for the life of that reference.
+
+        // Instead of giving up our ownership, we pass to function a REFERENCE
+        // using '&' symbol. We now don't need to use tuples!!
+        fn calc_len_with_reference(s: &String) -> usize 
+        {
+            s.len()
+        } // // Here, s goes out of scope. But because s does not have ownership of what it refers to, the String is not dropped.
+
+        let s = String::from("string for reference");
+        let len = calc_len_with_reference(&s);
+
+        println!("main scope Still has ownership of s={s}, s.len={len}");
+
+        println!("############ MUTABLE REFERENCES #############");
+
+        // ###################################
+        // REFERENCES ARE IMMUTABLE BY DEFAULT
+        // ###################################
+
+        // When we create a reference from our s, since s is NOT MUTABLE, 
+        // reference will also be IMMUTABLE
+        // Thus below function will give us error, we cannot modify data from
+        // immutable reference
+        // fn change(some_string: &String) 
+        // {
+        //     some_string.push_str(", world");
+        // }
+
+        fn change_mut_red(ref_mutable_str: &mut String)
+        {
+            ref_mutable_str.push_str("string added in function");
+        }
+
+        // function takes a reference to mutable string, so for it to work we 
+        // also need to create a mutable string
+        let mut str_mut: String = String::from("mutable string ");
+
+        // we give mutable reference to mutable string
+        change_mut_red(&mut str_mut);
+
+        println!("string modified in function using reference: '{str_mut}' ");
+
+        // !!!!!!!!!!!!!!!!!!!!!!!
+        // IF YOU HAVE A MUTABLE REFERENCE TO A VALUE, YOU CAN HAVE NO OTHER 
+        // REFERENCES TO THAT VALUE
+        // !!!!!!!!!!!!!!!!!!!!!!!
+
+        // So we can have only one reference to a value when its mutable reference, but multiple references but only when they are IMMUTABLE 
+
+        let mut s = String::from("some str");
+        // this is fine since both references are immutable
+        let ref_1 = &s;
+        let ref_2 = &s;
+
+        println!("ref1: {ref_1}, ref2: {ref_2}");
+
+        // this will not work, we cannot have two mutable references to variable
+        // at the same time
+        // let mut_ref_1 = &mut s;
+        // let mut_ref_2 = &mut s;
+
+        // println!("mut ref1: {mut_ref_1}, mut ref2: {mut_ref_2}");
+
+        // We CANNOT HAVE IMMUTABLE AND ONE MUTABLE REFERENCE at the same time, 
+        // Users of an immutable reference don’t expect the value to suddenly change out from under them! However, multiple immutable references are allowed because no one who is just reading the data has the ability to affect anyone else’s reading of the data.
+
+        // let ref_1 = &s;
+        // let ref_2 = &s;
+        // let mut_ref_3 = &mut s;
+
+        // println!("ref1: {ref_1}, ref2: {ref_2}, mut ref {mut_ref_3}");
+
+
+        // REFERENCE’S SCOPE STARTS FROM WHERE IT IS INTRODUCED AND CONTINUES THROUGH THE LAST TIME THAT REFERENCE IS USED
+
+        // so below code will compile:
+        let mut s = String::from("hello");
+
+        let r1 = &s; // no problem
+        let r2 = &s; // no problem
+        println!("{r1} and {r2}");
+        // Variables r1 and r2 will not be used after this point.
+
+        let r3 = &mut s; // no problem
+        println!("{r3}");
+    }
+    
+}
+
+fn chapter_4_1_OWNERSHIP()
 {
     let is_ownership = true;
     let is_string_type = true;
+    let is_functions = true;
 
     if is_ownership {
         println!("############# OWNERSHIP #############");
@@ -62,22 +183,108 @@ fn chapter_4_OWNERSHIP()
         // -- We need a way of returning this memory to the allocator when we’re done with our String.
         //     ---> this is where ownership comes
 
-        // Changing ownership etc
+        // ############## CHANGING OWNERSHIP ETC ##############
         println!("########### Variables and Data Interacting with Move ###########");
 
-        // since integers are simple data types with known FIXED size, thus
-        // they will be copied and pushed on stack  
+        // since integers are simple data types with a known FIXED size at 
+        // compile time, thus they will be copied and pushed on stack with '='
+        // in their case SHALLOW COPY = DEEP COPY, so there is no need for clone
+        // method
         let x = 5;
         let y = x;
         println!("x = {x}, y = {y}");
 
-        // HOWEVER this is not the case with below example
+        // HOWEVER this is not the case with below example, since string is more
+        // complex and have data allocated on heap
         let s1 = String::from("some string");
         let s2 = s1;
 
+        // below will give an error: 
+        // println!("s1 is invalid {s1}");
+
         // s2 will not have a copy of s1, but s2 will BE THE NEW AND ONLY OWNER
         // of s1 string data, thus after s2 = s1 line, s1 is NO LONGER VALID
-        // and does not point to our String data 
+        // and does not point to our String data. Why? Because if it did point, 
+        // after going out of scope rust would do free(s2) AND ALSO free(s1) and
+        // we would have double free bug.
+
+        // Thus in ```let s2 = s1;``` rust performs MOVE operation, 
+        // so s1 is not valid anymore, and s2 has its data (s2 copies pointer 
+        // to string data that is allocated on heap, so we have shallow copy)
+
+        // ############## DEEP COPY / SHALLOW COPY ##############
+
+        // Also RUST WILL NEVER AUTOMATICALLY CREATE “DEEP” COPIES OF YOUR DATA 
+        // Therefore, any automatic copying can be assumed to be inexpensive in terms of runtime performance
+
+        // When you assign a completely new value to an existing variable, Rust will call drop and free the original value’s memory immediately
+
+        let mut mut_str = String::from("This val will be dropped");
+        mut_str = String::from("This val will appear");
+
+        println!("previous mut_str val was dropped: {mut_str}");
+
+        // When we want deep copy we use clone method
+
+        let s1 = String::from("this string will be copied");
+        let s2 = s1.clone();
+
+        println!("######### DEEP COPY using clone() ################"); 
+        println!("s1 = {s1}, s2 = {s2}");
+
+
+        // Rust has a special annotation called the COPY TRAIT that we can place on types that are stored on the stack. If a type implements the Copy trait, VARIABLES THAT USE IT DO NOT MOVE, BUT ARE TRIVIALLY COPIED making them still valid after assignment to another variable.
+    }
+
+    if is_functions {
+        println!("############## OWNERSHIP WITH FUNCTIONS ##############");
+
+        fn take_ownership(s: String)
+        {
+            println!("I have taken ownership of s='{s}', s is no longer valid outside of this function :)");
+        }
+
+        fn makes_copy(x: i32)
+        {
+            println!("My arg is integer, so Deep copy = Shallow copy, so integers have COPY TRAIT, thus I got a copy in my argument, x={x}");
+        }
+
+        fn give_ownership() -> String
+        {
+            // we create new string, and then return it, thus this new_s loses
+            // its ownership of string, but variable that will get value from
+            // this function will get also an ownership of this string
+            let new_s = String::from("new string");
+            new_s
+        }
+
+        { // scope
+            // mechanics of passing a value to a function are similar to those 
+            // when assigning a value to a variable. 
+            // Passing a variable to a function will move or copy
+            let s = String::from("string to be moved to function");
+
+            // here s is moved since it is complex type, doesnt have COPY TRAIT
+            take_ownership(s);
+
+            // therefore after take_ownership() function, s is no longer valid
+            // in this scope, cause it's value was moved inside the function
+
+            // below code will not compile
+            // println!("s is not valid: {s}");
+
+            // however with types that have copy trait values will be just copied, and variable in this scope after function will be valid
+            let x = 32;
+            makes_copy(x);
+
+            println!("x={x} still valid after makes_copy function");
+
+            // The ownership of a variable follows the same pattern every time: assigning a value to another variable moves it. When a variable that includes data on the heap goes out of scope, the value will be cleaned up by drop unless ownership of the data has been moved to another variable.
+            let s: String = give_ownership();
+            println!("var s={s} in scope was given ownership by function");
+
+            // While this works, taking ownership and then returning ownership with every function is a bit TEDIOUS. What if we want to let a function use a value but not take ownership
+        }
 
     }
 
