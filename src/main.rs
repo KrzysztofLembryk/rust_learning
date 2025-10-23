@@ -3,14 +3,20 @@ use std::cmp::Ordering;
 use std::io;
 use rand::Rng;
 
+mod structs_enums;
+
+use structs_enums::{chapter_5_1_structs, 
+    chapter_5_2_exmpl_prog_with_structs,
+    chapter_5_3_struct_methods,
+    chapter_6_3_MATCH};
+
 fn main() {
-chapter_5_1_structs();
+    // chapter_5_1_structs();
+    // chapter_5_2_exmpl_prog_with_structs();
+    // chapter_5_3_struct_methods();
+    chapter_6_3_MATCH();
 }
 
-fn chapter_5_1_structs()
-{
-
-}
 
 fn chapter_4_3_SLICES()
 {
