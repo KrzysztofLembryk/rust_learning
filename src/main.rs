@@ -4,11 +4,195 @@ use std::io;
 use rand::Rng;
 
 fn main() {
-   chapter_4_2_REFERENCES();
+chapter_5_1_structs();
+}
+
+fn chapter_5_1_structs()
+{
+
+}
+
+fn chapter_4_3_SLICES()
+{
+    let is_slices = true;
+    let is_string_literals = true;
+
+    if is_slices {
+        println!("############ SLICES #############");
+        // SLICES let you REFERENCE A CONTIGUOUS SEQUENCE OF ELEMENTS in a 
+        // collection. A slice is a kind of reference, so it does not have ownership.
+
+        // Programming Problem: write a function that takes a string of words separated by spaces and returns the first word it finds in that string. If the function doesn’t find a space in the string, the whole string must be one word, so the entire string should be returned.
+
+        // How to do it in rust, but without slices?
+
+        println!("############ WITHOUT SLICES #############");
+        // We don’t need the ownership of string, so we use reference.
+        // Our function will return idx of the end of the word
+        fn first_word(s: &String) -> usize 
+        {
+            // we want to go through string elem by elem and check if value is 
+            // a space --> we convert our string to an ARRAY OF BYTES
+            let bytes = s.as_bytes();
+
+            // We create iterator over the bytes array using iter.() 
+            // then we use enumerate() so that we have elements idxs
+            // enumerate returns tuple --> (idx, &ref_to_data) 
+            for (i, &item) in bytes.iter().enumerate()
+            {
+                if item == b' '
+                {
+                    return i;
+                }
+            }
+            return s.len();
+        }
+
+        // We now have a way to find out the index of the end of the first word in the string, but there’s a problem. We’re returning a usize on its own, but it’s only a meaningful number in the context of the &String. In other words, because it’s a separate value from the String, there’s no guarantee that it will still be valid in the future.
+
+        // For example: 
+        let mut s = String::from("hello world");
+
+        let word = first_word(&s); // word will get the value 5
+
+        println!("initial string: {s}, idx of end of first word: {word}");
+
+        s.clear(); // this empties the String, making it equal to ""
+
+        println!("initial string: '{s}' (empty), idx of end of first word: {word} (the same as it was, but s is empty now)");
+        // word still has the value 5 here, but s no longer has any content 
+        // that we could meaningfully use with the value 5, so word is now totally invalid!
+
+        // !!!!!!!!!!!!!1
+        // Having to worry about the index in word getting out of sync with the data in s is tedious and error prone!
+        // !!!!!!!!!!!!!1
+
+
+        println!("############ WITH SLICES #############");
+
+        // A string slice is a reference to a contiguous sequence of the elements of a String:
+        // Internally, the SLICE DATA STRUCTURE STORES THE STARTING POSITION and the LENGTH OF THE SLICE (&s[..3] is a FAT pointer)
+        // ---> 'str' is an unsized type (or dynamically sized type) 
+        //      WHY? Because we can have str= "Ala ma kota", 
+        //      but also str= "Ala", two different sizes (size not known at 
+        //      compile time)
+
+        let s = String::from("hello!world");
+        println!("s = {s}");
+
+        // #####################################################################
+        // ############### EXPLANATION WHY WE USE & IN SLICES ##################
+        // #####################################################################
+        // s[..5] returns the ACTUAL DATA OF TYPE 'str', that is stored
+        //      somewhere, we cannot do ```let s2 = s[..5]```, since rust will 
+        //      want to move and transfer ownership from s to s2, so one part 
+        //      of whole string would have different owner than the other part. 
+        // 
+        // Moreover 'str' is unsized type, rust doesn't allow to have 
+        //      unsized types as variables, thus we need to make reference from 
+        //      this str by using '&'. Reference &str is sized compared to str.
+        //      So even when we do let s = "Trol", this 's' variable is '&str' 
+        //      and not 'str', because in this case str has size 5 bytes but 
+        //      '&str' has always size 16 bytes
+        // 
+        // By making reference &s[..4] we finally obtain SLICE, this reference
+        //      is called FAT POINTER, since it stores pointer to the first elem
+        //      defined in slice and length of the slice
+        // #####################################################################
+        // #####################################################################
+        let hello1 = &s[0..5]; // we take elements from 0 to 4, without 5
+        let hello2 = &s[0..=5]; // we take elements from 0 to 5
+        let hello3 = &s[..5]; // from begginning to 4 idx
+
+        println!("s[0..5]: '{hello1}', s[0..=5]: '{hello2}', s[..5]: '{hello3}'");
+
+        // if we want to take all elems till the end we can omit second number!!
+        let world = &s[6..]; 
+
+        // we can take whole string if we do not supply any numbers
+        let whole_string = &s[..];
+
+        println!("s[6..]: '{world}', s[..]: '{whole_string}");
+
+        // So now we can rewrite the first_word function:
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!!!!!! DIFFERENCE BTW str and String !!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // --> A String type is a container for a str that is stored on the heap.
+        // --> str is the actual text itself
+        // --> &str is reference to the actual text itself stored on heap
+
+        // #####################################################################
+        // ########################## WHEN TO USE WHICH ########################
+        // #####################################################################
+        // --> Use &str when you KNOW THERE IS AN OWNER OF THE STRING ALREADY, and they will hold still for you to borrow it as long as you need it. 
+        // --> If THERE IS NO EXISTING OWNER, or if the owner has its own business that is incompatible with you borrowing it, then YOU NEED TO USE STRING.
+
+        // So any function which CREATES A NEW STRING that DID NOT PREVIOUSLY EXIST MUST RETURN STRING rather than &str, because in order to continue existing past the function returning, the string needs to be owned by the return value. 
+        // In general function that creates sth can't return a reference to this
+        // thing since created variable will be destructed after the function
+        // ends, and we will have dangling reference (Rust compile won't allow that)
+
+        // full expl: https://users.rust-lang.org/t/understanding-when-to-use-string-vs-str/103746/2
+
+        fn first_word_better(s: &String) -> &str 
+        {
+            let bytes = s.as_bytes();
+
+            for (i, &item) in bytes.iter().enumerate()
+            {
+                if item == b' '
+                {
+                    return &s[..i];
+                }
+            }
+            return &s[..];
+        }
+
+        let s = String::from("test string xd");
+        let x = first_word_better(&s); // immutable borrow
+
+        println!("first len: {}, content: {}", x.len(), x);
+
+        // we cannot clear our string now, as we could in first version of 
+        // first_word function, since our x is an immutable reference to s
+        // Not to whole 's', but to part of it, but it is enough, since if 
+        // we cleared 's' now, we would have dangling immutable reference.
+
+        // s.clear(); // mutable reference of 's' needed since clear() wants 
+        // to truncate the String, and since println uses 'x', our immutable ref
+        // is still valid, thus we cannot have both mutable and immutable at the
+        // same time
+
+        // println!("AFTER CLEAR: first len: {}, content: {}", first.len(), first);
+
+    }
+
+    if is_string_literals {
+        println!("############ STRING LITERALS #############");
+        // string literals (str type):
+        // ---> are stored inside the binary read-only data section
+        // ---> hardcoded in compiled programme
+        // ---> STATIC lifetimes; they live for entire duration of programme
+
+        let s = "Hello, world!";
+        // The type of s here is &str: it’s a slice pointing to that specific point of the binary. This is also why string literals are immutable; &str is an immutable reference.
+
+        // below function signature will work for both String and str
+        fn first_word_best(s: &str) -> &str {
+            s
+        }
+        // Why? If we have a string slice, we can pass that directly. If we have a String, we can pass a slice of the String or a reference to the String. This flexibility takes advantage of DEREF COERCIONS.
+
+        // Defining a function to take a string slice instead of a reference to a String makes our API more general and useful without losing any functionality
+    }
 }
 
 fn chapter_4_2_REFERENCES()
 {
+    // A REFERENCE IS LIKE A POINTER 
+    // ---> it’s an address we can follow to access the data stored at that address; that data is owned by some other variable.
     let is_reference_borrowing = true;
 
     if is_reference_borrowing {
@@ -117,11 +301,45 @@ fn chapter_4_2_REFERENCES()
 
         let r1 = &s; // no problem
         let r2 = &s; // no problem
-        println!("{r1} and {r2}");
+        println!("immutable refs: {r1} and {r2}");
         // Variables r1 and r2 will not be used after this point.
 
         let r3 = &mut s; // no problem
-        println!("{r3}");
+        println!("mutable ref: {r3}, it works, cause r1 and r2 immut refs are out of scope and no longer used when we use mutable r3");
+
+
+        println!("########## DANGLING REFERENCES ##########");
+
+        // In languages with pointers, it’s easy to erroneously create a 
+        // dangling pointer—a pointer that references a location in memory that 
+        // may have been given to someone else—by freeing some memory while 
+        // preserving a pointer to that memory
+
+        // In Rust, the COMPILER GUARANTEES THAT REFERENCES WILL NEVER BE 
+        // DANGLING REFERENCES. 
+
+        // below function will not compile and give below error:
+        // this function's return type contains a borrowed value, but there is 
+        // no value for it to be borrowed from
+
+        // fn dangle() -> &String // dangle returns a reference to a String
+        // { 
+        //     let s = String::from("hello"); // s is a new String
+
+        //     &s // we return a reference to the String, s
+        // } // Here, s goes out of scope and is dropped, so its memory goes away.
+
+        // Because s is created inside dangle, when the code of dangle is 
+        // finished, s will be deallocated. But we tried to return a reference 
+        // to it. That means this reference would be pointing to an invalid 
+        // String. That’s no good! Rust won’t let us do this.
+
+
+        // ########### RECAP ###############
+        // At any given time, you can have either: 
+        // ---> one mutable reference 
+        // ---> or any number of immutable references.
+        // References must always be valid.
     }
     
 }
