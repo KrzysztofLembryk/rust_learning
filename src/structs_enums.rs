@@ -7,7 +7,84 @@ struct User {
     sign_in_count: u64
 }
 
-pub fn chapter_6_3_MATCH()
+pub fn chapter_6_3_if_let()
+{
+    // The if let syntax lets you combine if and let into a less verbose way to handle values that match one pattern while ignoring the rest
+
+    #[derive(Debug)] 
+    enum UsState {
+        Alabama,
+        Alaska,
+    }
+
+    impl UsState {
+    fn existed_in(&self, year: u16) -> bool {
+        match self {
+            UsState::Alabama => year >= 1819,
+            UsState::Alaska => year >= 1959,
+        }
+    }
+}
+
+    enum Coin {
+        Penny,
+        Nickel,
+        Dime,
+        Quarter(UsState), 
+        // enums can have values and in match expr we can get them
+    }
+
+    // so instead of writing below:
+    let config_max = Some(8);
+
+    match config_max 
+    {
+        Some(max) => println!("The maximum is configured to be {max}"),
+        _ => ()
+    }
+
+    // We can write it using if let.
+    // Basically if our config_max is of form Some(value), we will run the code
+    // inside if, also we will have access to value stored inside Some
+    if let Some(max) = config_max
+    {
+        println!("if let maximum: {max}");
+    }
+
+    // if let ... ELSE syntax means basically the same as our match expression
+    // above
+
+    if let Some(max) = config_max
+    {
+        println!("we are in if let, not in else, max: {max}");
+    }
+    else  // in match this is case: _ => ()
+    {
+        println!("else branch, default behaviour if config_max is not Some(val)");
+    }
+
+    // let ... else syntax
+    fn describe_coin(coin: Coin) -> Option<String>
+    {
+        // if coin is of type Quarter we will execute rest of the function
+        // but if it's not we will immediately return with None
+        let Coin::Quarter(state) = coin else {return None;};
+
+        // If coin is Quarter, by doing let ... else, we obtained 'state' value 
+        // from inside of the Coin, and can use this state variable in our function
+        if state.existed_in(1900)
+        {
+            Some(format!("{state:?} is pretty old, for America!"))
+        }
+        else 
+        {
+            Some(format!("{state:?} is relatively new."))     
+        }
+    }
+
+}
+
+pub fn chapter_6_2_MATCH()
 {
     // Values go through each pattern in a match, and at the first pattern the value “fits,” the value falls into the associated code block to be used during execution
 

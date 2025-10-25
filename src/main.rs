@@ -4,17 +4,33 @@ use std::io;
 use rand::Rng;
 
 mod structs_enums;
+mod common_collections;
+mod error_handling;
+mod generics;
 
 use structs_enums::{chapter_5_1_structs, 
     chapter_5_2_exmpl_prog_with_structs,
     chapter_5_3_struct_methods,
-    chapter_6_3_MATCH};
+    chapter_6_2_MATCH};
+
+use common_collections::{
+    chapter_8_vectors,
+    chapter_8_strings
+};
+
+
+use error_handling::{
+    chapter_9_recoverable_errors
+};
 
 fn main() {
     // chapter_5_1_structs();
     // chapter_5_2_exmpl_prog_with_structs();
     // chapter_5_3_struct_methods();
-    chapter_6_3_MATCH();
+    // chapter_6_2_MATCH();
+    // chapter_8_vectors();
+    // chapter_8_strings();
+    chapter_9_recoverable_errors();
 }
 
 
