@@ -7,6 +7,13 @@ mod structs_enums;
 mod common_collections;
 mod error_handling;
 mod generics;
+mod minigrep;
+mod iterators_closures;
+mod smart_pointers;
+
+use smart_pointers::{
+    chapter_15_deref
+};
 
 use structs_enums::{chapter_5_1_structs, 
     chapter_5_2_exmpl_prog_with_structs,
@@ -23,6 +30,16 @@ use error_handling::{
     chapter_9_recoverable_errors
 };
 
+use generics::{
+    chapter_10_generics
+};
+
+use minigrep::{
+    grep_main
+};
+
+use crate::smart_pointers::chapter_15_deref;
+
 fn main() {
     // chapter_5_1_structs();
     // chapter_5_2_exmpl_prog_with_structs();
@@ -30,7 +47,9 @@ fn main() {
     // chapter_6_2_MATCH();
     // chapter_8_vectors();
     // chapter_8_strings();
-    chapter_9_recoverable_errors();
+    // chapter_9_recoverable_errors();
+    // chapter_10_generics();
+    grep_main();
 }
 
 
